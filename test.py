@@ -4,7 +4,7 @@ import argparse
 from datasets.crowd import Crowd
 from models.fusion import fusion_model
 from utils.evaluation import eval_game, eval_relative
-
+import numpy as np
 
 parser = argparse.ArgumentParser(description='Test')
 # parser.add_argument('--data-dir', default='/home/teddy/UCF-Train-Val-Test',
@@ -16,11 +16,11 @@ parser = argparse.ArgumentParser(description='Test')
 
 parser.add_argument('--data-dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'datas', 'bayes-RGBT-CC-V2'),
                         help='training data directory')
-# parser.add_argument('--save-dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models', 'vgg.py'),
-#                         help='model directory')
-
-parser.add_argument('--save-dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'datas', 'bayes-RGBT-CC-V2','res'),
+parser.add_argument('--save-dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models', 'vgg.py'),
                         help='model directory')
+
+# parser.add_argument('--save-dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'datas', 'bayes-RGBT-CC-V2','res'),
+#                         help='model directory')
                         
 
 
@@ -32,8 +32,6 @@ parser.add_argument('--device', default='0', help='gpu device')
 args = parser.parse_args()
 
 if __name__ == '__main__':
-
-
     datasets = Crowd(os.path.join(args.data_dir, 'test'), method='test')
     dataloader = torch.utils.data.DataLoader(datasets, 1, shuffle=False,
                                              num_workers=8, pin_memory=True)
@@ -53,6 +51,12 @@ if __name__ == '__main__':
     game = [0, 0, 0, 0]
     mse = [0, 0, 0, 0]
     total_relative_error = 0
+
+
+    # 创建 outputs 文件夹
+    outputs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'datas', 'bayes-RGBT-CC-V2','outputs')
+    if not os.path.exists(outputs_dir):
+        os.makedirs(outputs_dir)
 
     for inputs, target, name in dataloader:
         if type(inputs) == list:
@@ -75,6 +79,13 @@ if __name__ == '__main__':
                 mse[L] += square_error
             relative_error = eval_relative(outputs, target)
             total_relative_error += relative_error
+
+         # 保存人群计数结果为 .npy 文件
+        output_numpy = outputs.cpu().numpy()
+        # 假设 name 是类似 1234_RGB 的形式，将其改为 1234_GT
+        base_name = name[0].split('_RGB')[0]
+        npy_save_path = os.path.join(outputs_dir, f'{base_name}_GT.npy')
+        np.save(npy_save_path, output_numpy)
 
     N = len(dataloader)
     game = [m / N for m in game]
