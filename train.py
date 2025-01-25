@@ -13,7 +13,7 @@ def parse_args():
     #                     help='directory to save models.')
     parser.add_argument('--data-dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'datas', 'bayes-RGBT-CC-V2'),
                     help='training data directory')
-    parser.add_argument('--save-dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models'),
+    parser.add_argument('--save-dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'datas'),
                         help='directory to save models.')
     parser.add_argument('--lr', type=float, default=1e-5,
                         help='the initial learning rate')
@@ -34,7 +34,7 @@ def parse_args():
                         help='the num of steps to log training information')
     parser.add_argument('--val-start', type=int, default=20,
                         help='the epoch start to val')
-    parser.add_argument('--save-all-best', type=bool, default=True,
+    parser.add_argument('--save-all-best', type=bool, default=False,
                         help='whether to load opt state')
     parser.add_argument('--batch-size', type=int, default=1,
                         help='train batch size')

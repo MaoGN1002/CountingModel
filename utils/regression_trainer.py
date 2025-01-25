@@ -15,7 +15,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from datasets.crowd import Crowd
 from losses.bay_loss import Bay_Loss
 from losses.post_prob import Post_Prob
-from models.fusion import fusion_model
+# from models.fusion import fusion_model
+from models.fusion import FusionModel
 
 
 def train_collate(batch):
@@ -61,7 +62,8 @@ class RegTrainer(Trainer):
                                           pin_memory=(True if x == 'train' else False))
                             for x in ['train', 'val', 'test']}
 
-        self.model = fusion_model()
+        # self.model = fusion_model()
+        self.model = FusionModel()
         self.model.to(self.device)
         self.optimizer = optim.Adam(self.model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
@@ -94,11 +96,13 @@ class RegTrainer(Trainer):
         """training process"""
         args = self.args
         for epoch in range(self.start_epoch, args.max_epoch):
-            # logging.info('save dir: '+args.save_dir)
+            logging.info('save dir: '+args.save_dir)
             logging.info('-'*5 + 'Epoch {}/{}'.format(epoch, args.max_epoch - 1) + '-'*5)
             self.epoch = epoch
             self.train_eopch()
+            # logging.info("训练结束")
             if epoch % args.val_epoch == 0 and epoch >= args.val_start:
+                # logging.info("准备进入val")
                 game0_is_best, game3_is_best = self.val_epoch()
 
             if epoch >= args.val_start and (game0_is_best or game3_is_best):
@@ -201,6 +205,8 @@ class RegTrainer(Trainer):
         game0_is_best = game[0] < self.best_game0
         game3_is_best = game[3] < self.best_game3
 
+        # logging.info("是否保存")
+
         if game[0] < self.best_game0 or game[3] < self.best_game3:
             self.best_game3 = min(game[3], self.best_game3)
             self.best_game0 = min(game[0], self.best_game0)
@@ -208,9 +214,11 @@ class RegTrainer(Trainer):
                                                                                     self.best_game3,
                                                                                     self.epoch))
             if args.save_all_best:
+                # logging.info(f"111已保存，保存路径为{model_state_dic, os.path.join(self.save_dir, 'best_model.pth')}")
                 torch.save(model_state_dic, os.path.join(self.save_dir, 'best_model_{}.pth'.format(self.best_count)))
                 self.best_count += 1
             else:
+                logging.info(f"已保存，保存路径为{os.path.join(self.save_dir, 'best_model.pth')}")
                 torch.save(model_state_dic, os.path.join(self.save_dir, 'best_model.pth'))
 
         return game0_is_best, game3_is_best
