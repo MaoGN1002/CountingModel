@@ -68,17 +68,17 @@ class FusionModel(nn.Module):
         # x = self.conv_adjust(x)
 
         # Transformer模块提取全局语义特征
-        x_rgb = x.flatten(2).permute(2, 0, 1)
-        x_t = x.flatten(2).permute(2, 0, 1)
-        x_rgb = self.rgb_transformer(x_rgb)
-        x_t = self.t_transformer(x_t)
-        x_rgb = x_rgb.permute(1, 2, 0).view_as(x)
-        x_t = x_t.permute(1, 2, 0).view_as(x)
+        # x_rgb = x.flatten(2).permute(2, 0, 1)
+        # x_t = x.flatten(2).permute(2, 0, 1)
+        # x_rgb = self.rgb_transformer(x_rgb)
+        # x_t = self.t_transformer(x_t)
+        # x_rgb = x_rgb.permute(1, 2, 0).view_as(x)
+        # x_t = x_t.permute(1, 2, 0).view_as(x)
 
-        # 融合特征
-        x_fused = (x_rgb + x_t) / 2
+        # # 融合特征
+        # x_fused = (x_rgb + x_t) / 2
 
-        x = F.upsample_bilinear(x_fused, scale_factor=2)
+        # x = F.upsample_bilinear(x_fused, scale_factor=2)
         x = self.reg_layer(x)
         return torch.abs(x)
 
@@ -116,6 +116,10 @@ class Block(nn.Module):
         self.rgb_distribute_1x1conv = nn.Conv2d(channels, channels, kernel_size=1)
         self.t_distribute_1x1conv = nn.Conv2d(channels, channels, kernel_size=1)
 
+        # # 添加 TransformerBlock
+        # self.rgb_transformer = TransformerBlock(channels)
+        # self.t_transformer = TransformerBlock(channels)
+
     def forward(self, RGB, T, shared):
         RGB = self.rgb_conv(RGB)
         T = self.t_conv(T)
@@ -123,6 +127,11 @@ class Block(nn.Module):
             shared = torch.zeros(RGB.shape).cuda()
         else:
             shared = self.shared_conv(shared)
+
+        # 在融合之前应用 TransformerBlock
+        # RGB = self.rgb_transformer(RGB.flatten(2).permute(2, 0, 1)).permute(1, 2, 0).view_as(RGB)
+        # T = self.t_transformer(T.flatten(2).permute(2, 0, 1)).permute(1, 2, 0).view_as(T)
+
 
         new_RGB, new_T, new_shared = self.fuse(RGB, T, shared)
         return new_RGB, new_T, new_shared
