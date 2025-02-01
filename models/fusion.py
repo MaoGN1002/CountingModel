@@ -40,8 +40,8 @@ class FusionModel(nn.Module):
         # 在 FusionModel 的 __init__ 方法中添加一个 1x1 卷积层
         # self.conv_adjust = nn.Conv2d(307, 512, kernel_size=1)
 
-        self.rgb_transformer = TransformerBlock(in_channels=cT)
-        self.t_transformer = TransformerBlock(in_channels=cT)
+        # self.rgb_transformer = TransformerBlock(in_channels=cT)
+        # self.t_transformer = TransformerBlock(in_channels=cT)
 
         self.reg_layer = nn.Sequential(
             nn.Conv2d(c4, c3, kernel_size=3, padding=1),

@@ -2,7 +2,7 @@ import torch
 import os
 import argparse
 from datasets.crowd import Crowd
-from models.fusion import fusion_model
+from models.fusion import FusionModel
 from utils.evaluation import eval_game, eval_relative
 import numpy as np
 
@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(description='Test')
 
 parser.add_argument('--data-dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'datas', 'bayes-RGBT-CC-V2'),
                         help='training data directory')
-parser.add_argument('--save-dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'models', 'vgg.py'),
+parser.add_argument('--save-dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)),'datas','0124-104810'),
                         help='model directory')
 
 # parser.add_argument('--save-dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'datas', 'bayes-RGBT-CC-V2','res'),
@@ -25,7 +25,7 @@ parser.add_argument('--save-dir', default=os.path.join(os.path.dirname(os.path.a
 
 
 # 这里看一下名字对不对
-parser.add_argument('--model', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'datas', 'BL_IADM_model.pth')
+parser.add_argument('--model', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'datas', '0124-104810','best_model.pth')
                     , help='model name')
 
 parser.add_argument('--device', default='0', help='gpu device')
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = args.device  # set vis gpu
     device = torch.device('cuda')
 
-    model = fusion_model()
+    model = FusionModel()
     model.to(device)
     model_path = os.path.join(args.save_dir, args.model)
     checkpoint = torch.load(model_path, device)
@@ -80,12 +80,16 @@ if __name__ == '__main__':
             relative_error = eval_relative(outputs, target)
             total_relative_error += relative_error
 
-         # 保存人群计数结果为 .npy 文件
-        output_numpy = outputs.cpu().numpy()
-        # 假设 name 是类似 1234_RGB 的形式，将其改为 1234_GT
-        base_name = name[0].split('_RGB')[0]
-        npy_save_path = os.path.join(outputs_dir, f'{base_name}_GT.npy')
-        np.save(npy_save_path, output_numpy)
+
+        save_outputs = False
+        if save_outputs:
+            # 保存人群计数结果为 .npy 文件
+            output_numpy = outputs.cpu().numpy()
+            # 假设 name 是类似 1234_RGB 的形式，将其改为 1234_GT
+            base_name = name[0].split('_RGB')[0]
+            npy_save_path = os.path.join(outputs_dir, f'{base_name}_GT.npy')
+            np.save(npy_save_path, output_numpy)
+
 
     N = len(dataloader)
     game = [m / N for m in game]
