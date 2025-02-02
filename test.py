@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(description='Test')
 
 parser.add_argument('--data-dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'datas', 'bayes-RGBT-CC-V2'),
                         help='training data directory')
-parser.add_argument('--save-dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)),'datas','0124-104810'),
+parser.add_argument('--save-dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)),'datas','0202-013003'),
                         help='model directory')
 
 # parser.add_argument('--save-dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'datas', 'bayes-RGBT-CC-V2','res'),
@@ -25,7 +25,7 @@ parser.add_argument('--save-dir', default=os.path.join(os.path.dirname(os.path.a
 
 
 # 这里看一下名字对不对
-parser.add_argument('--model', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'datas', '0124-104810','best_model.pth')
+parser.add_argument('--model', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'datas', '0202-013003','best_model.pth')
                     , help='model name')
 
 parser.add_argument('--device', default='0', help='gpu device')

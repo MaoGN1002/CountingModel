@@ -91,21 +91,27 @@ class RegTrainer(Trainer):
         self.best_game3 = np.inf
         self.best_count = 0
         self.best_count_1 = 0
+        #加入对测试集参数的记录
+        self.best_test0=np.inf
+        self.best_test3=np.inf
 
     def train(self):
         """training process"""
         args = self.args
         for epoch in range(self.start_epoch, args.max_epoch):
-            logging.info('save dir: '+args.save_dir)
+            # logging.info('save dir: '+args.save_dir)
             logging.info('-'*5 + 'Epoch {}/{}'.format(epoch, args.max_epoch - 1) + '-'*5)
             self.epoch = epoch
             self.train_eopch()
             # logging.info("训练结束")
-            if epoch % args.val_epoch == 0 and epoch >= args.val_start:
+            # 下面两个判断全部去掉and epoch >= args.val_start
+            if epoch % args.val_epoch == 0:
                 # logging.info("准备进入val")
                 game0_is_best, game3_is_best = self.val_epoch()
 
-            if epoch >= args.val_start and (game0_is_best or game3_is_best):
+            if (game0_is_best or game3_is_best):
+                #可能存在更优模型，进入测试
+                logging.info("可能存在更优模型，进入测试")
                 self.test_epoch()
 
     def train_eopch(self):
@@ -213,17 +219,18 @@ class RegTrainer(Trainer):
             logging.info("*** Best Val GAME0 {:.3f} GAME3 {:.3f} model epoch {}".format(self.best_game0,
                                                                                     self.best_game3,
                                                                                     self.epoch))
-            if args.save_all_best:
-                # logging.info(f"111已保存，保存路径为{model_state_dic, os.path.join(self.save_dir, 'best_model.pth')}")
-                torch.save(model_state_dic, os.path.join(self.save_dir, 'best_model_{}.pth'.format(self.best_count)))
-                self.best_count += 1
-            else:
-                logging.info(f"已保存，保存路径为{os.path.join(self.save_dir, 'best_model.pth')}")
-                torch.save(model_state_dic, os.path.join(self.save_dir, 'best_model.pth'))
+            # if args.save_all_best:
+            #     # logging.info(f"111已保存，保存路径为{model_state_dic, os.path.join(self.save_dir, 'best_model.pth')}")
+            #     torch.save(model_state_dic, os.path.join(self.save_dir, 'best_model_{}.pth'.format(self.best_count)))
+            #     self.best_count += 1
+            # else:
+            #     logging.info(f"已保存，保存路径为{os.path.join(self.save_dir, 'best_model.pth')}")
+            #     torch.save(model_state_dic, os.path.join(self.save_dir, 'best_model.pth'))
 
         return game0_is_best, game3_is_best
 
     def test_epoch(self):
+        args = self.args
         self.model.eval()  # Set model to evaluate mode
 
         # Iterate over data.
@@ -259,11 +266,35 @@ class RegTrainer(Trainer):
         total_relative_error = total_relative_error / N
 
         logging.info('Epoch {} Test{}, '
-                     'GAME0 {game0:.2f} GAME1 {game1:.2f} GAME2 {game2:.2f} GAME3 {game3:.2f} MSE {mse:.2f} Re {relative:.4f}, '
-                     .format(self.epoch, N, game0=game[0], game1=game[1], game2=game[2], game3=game[3], mse=mse[0],
-                             relative=total_relative_error
-                             )
-                     )
+                            'GAME0 {game0:.2f} GAME1 {game1:.2f} GAME2 {game2:.2f} GAME3 {game3:.2f} MSE {mse:.2f} Re {relative:.4f}, '
+                            .format(self.epoch, N, game0=game[0], game1=game[1], game2=game[2], game3=game[3], mse=mse[0],
+                                    relative=total_relative_error
+                                    )
+                            )
+
+        test_game0_is_best = game[0] < self.best_test0
+        test_game3_is_best = game[3] < self.best_test3
+        model_state_dic = self.model.state_dict()
+
+        if game[0] < self.best_test0 or game[3] < self.best_test3:
+            self.best_test0 = min(game[0], self.best_test0)
+            self.best_test3 = min(game[3], self.best_test3)
+            # logging.info("*** Best Test GAME0 {:.3f} GAME3 {:.3f} model epoch {}".format(self.best_test0,
+                                                                                    # self.best_test3,
+                                                                                    # self.epoch))
+            
+            if args.save_all_best:
+                # logging.info(f"111已保存，保存路径为{model_state_dic, os.path.join(self.save_dir, 'best_model.pth')}")
+                torch.save(model_state_dic, os.path.join(self.save_dir, 'best_model_{}.pth'.format(self.best_count)))
+                self.best_count += 1
+            else:
+                logging.info(f"发现在test中表现更好的模型，已保存，保存路径为{os.path.join(self.save_dir, 'best_model.pth')}")
+                torch.save(model_state_dic, os.path.join(self.save_dir, 'best_model.pth'))
+
+
+
+
+        
 
 
 

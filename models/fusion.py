@@ -326,8 +326,25 @@ class Block(nn.Module):
         self.t_fuse_1x1conv = nn.Conv2d(channels, channels, kernel_size=1)
         self.rgb_distribute_1x1conv = nn.Conv2d(channels, channels, kernel_size=1)
         self.t_distribute_1x1conv = nn.Conv2d(channels, channels, kernel_size=1)
+
+
+        #############################################################
         #加入TransformerBlock层
-        self.shared_transformer = TransformerBlock(in_channels=channels)
+        # self.shared_transformer = TransformerBlock(in_channels=channels)
+        #############################################################
+        #卷积注意力by豆包
+        self.shared_attention = ConvAttentionBlock(in_channels=channels)
+        self.rgb_attention = ConvAttentionBlock(in_channels=channels)
+        self.t_attention = ConvAttentionBlock(in_channels=channels)
+
+
+
+
+        ##############################################################
+        # #卷积注意力by Copilot
+        # self.shared_attention = ConvAttention(in_channels=channels, out_channels=channels)
+
+
 
 
     def forward(self, RGB, T, shared):
@@ -340,11 +357,19 @@ class Block(nn.Module):
 
         new_RGB, new_T, new_shared = self.fuse(RGB, T, shared)
 
-        # 对new_shared应用TransformerBlock
-        b, c, h, w = new_shared.shape
-        new_shared = new_shared.flatten(2).transpose(1, 2)  # 转换为 (batch_size, seq_len, in_channels)
-        new_shared = self.shared_transformer(new_shared)
-        new_shared = new_shared.transpose(1, 2).view(b, c, h, w)  # 转换回 (batch_size, in_channels, height, width)
+
+        ############################################################################
+        # # 对new_shared应用TransformerBlock
+        # b, c, h, w = new_shared.shape
+        # new_shared = new_shared.flatten(2).transpose(1, 2)  # 转换为 (batch_size, seq_len, in_channels)
+        # new_shared = self.shared_transformer(new_shared)
+        # new_shared = new_shared.transpose(1, 2).view(b, c, h, w)  # 转换回 (batch_size, in_channels, height, width)
+        ############################################################################
+
+        #使用卷积注意力模块处理new_shared
+        new_RGB = self.rgb_attention(new_RGB)
+        new_T = self.t_attention(new_T)
+        new_shared = self.shared_attention(new_shared)
 
         return new_RGB, new_T, new_shared
 
@@ -414,6 +439,45 @@ class TransformerBlock(nn.Module):
         x = x + self.feed_forward(x)
         x = self.norm2(x)
         return x
+
+
+    # 定义卷积注意力模块
+class ConvAttentionBlock(nn.Module):
+    def __init__(self, in_channels,dropout_rate=0.1):
+        super(ConvAttentionBlock, self).__init__()
+        # 平均池化层，用于计算空间信息
+        self.avg_pool = nn.AdaptiveAvgPool2d(1)
+        # 全连接层，用于学习通道间的关系
+        self.fc = nn.Sequential(
+            nn.Conv2d(in_channels, in_channels // 16, kernel_size=1),
+            nn.ReLU(inplace=True),
+            nn.Dropout(dropout_rate),
+            nn.Conv2d(in_channels // 16, in_channels, kernel_size=1),
+            nn.Sigmoid()
+        )
+
+    def forward(self, x):
+        # 对输入进行平均池化，得到全局空间信息
+        b, c, _, _ = x.size()
+        y = self.avg_pool(x)
+        # 通过全连接层学习通道注意力权重
+        y = self.fc(y)
+        # 将通道注意力权重应用到输入上
+        return x * y.expand_as(x)
+
+
+# by Copilot
+class ConvAttention(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1):
+        super(ConvAttention, self).__init__()
+        self.conv = nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding)
+        self.softmax = nn.Softmax(dim=-1)
+
+    def forward(self, x):
+        conv_out = self.conv(x)
+        attention_map = self.softmax(conv_out)
+        out = x * attention_map
+        return out
 
 
 def fusion_model():
