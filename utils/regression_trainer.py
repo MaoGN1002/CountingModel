@@ -105,11 +105,11 @@ class RegTrainer(Trainer):
             self.train_eopch()
             # logging.info("训练结束")
             # 下面两个判断全部去掉and epoch >= args.val_start
-            if epoch % args.val_epoch == 0:
+            if epoch % args.val_epoch == 0 and epoch >= args.val_start:
                 # logging.info("准备进入val")
                 game0_is_best, game3_is_best = self.val_epoch()
 
-            if (game0_is_best or game3_is_best):
+            if epoch >= args.val_start and (game0_is_best or game3_is_best):
                 #可能存在更优模型，进入测试
                 logging.info("可能存在更优模型，进入测试")
                 self.test_epoch()
