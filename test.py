@@ -16,7 +16,7 @@ parser = argparse.ArgumentParser(description='Test')
 
 parser.add_argument('--data-dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'datas', 'bayes-RGBT-CC-V2'),
                         help='training data directory')
-parser.add_argument('--save-dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)),'datas','0202-013003'),
+parser.add_argument('--save-dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)),'datas','new_bestModel'),
                         help='model directory')
 
 # parser.add_argument('--save-dir', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'datas', 'bayes-RGBT-CC-V2','res'),
@@ -25,7 +25,7 @@ parser.add_argument('--save-dir', default=os.path.join(os.path.dirname(os.path.a
 
 
 # 这里看一下名字对不对
-parser.add_argument('--model', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'datas', '0202-013003','best_model.pth')
+parser.add_argument('--model', default=os.path.join(os.path.dirname(os.path.abspath(__file__)), 'datas', 'new_bestModel','best_model.pth')
                     , help='model name')
 
 parser.add_argument('--device', default='0', help='gpu device')
@@ -54,7 +54,7 @@ if __name__ == '__main__':
 
 
     # 创建 outputs 文件夹
-    outputs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'datas', 'bayes-RGBT-CC-V2','outputs')
+    outputs_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'datas', 'bayes-RGBT-CC-V2','305outputs')
     if not os.path.exists(outputs_dir):
         os.makedirs(outputs_dir)
 
@@ -81,13 +81,13 @@ if __name__ == '__main__':
             total_relative_error += relative_error
 
 
-        save_outputs = False
+        save_outputs = True
         if save_outputs:
             # 保存人群计数结果为 .npy 文件
             output_numpy = outputs.cpu().numpy()
             # 假设 name 是类似 1234_RGB 的形式，将其改为 1234_GT
             base_name = name[0].split('_RGB')[0]
-            npy_save_path = os.path.join(outputs_dir, f'{base_name}_GT.npy')
+            npy_save_path = os.path.join(outputs_dir, f'{base_name}.npy')
             np.save(npy_save_path, output_numpy)
 
 

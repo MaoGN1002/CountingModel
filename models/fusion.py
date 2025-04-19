@@ -167,7 +167,7 @@ class ConvAttentionBlock(nn.Module):
 
     def forward(self, x):
         # 对输入进行平均池化，得到全局空间信息
-        b, c, _, _ = x.size()
+        # b, c, _, _ = x.size()
         y = self.avg_pool(x)
         # 通过全连接层学习通道注意力权重
         y = self.fc(y)
